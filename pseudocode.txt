@@ -1,0 +1,93 @@
+#sort files first 
+Sort by qseqid and then evalue but be sure that your sort has the “best” e-values for each query at the top.
+sort -k1,1 -k11,11g zfish_against_human.txt > sorted_zfish_against_human.txt
+sort -k1,1 -k11,11g human_against_zfish.txt > sorted_human_against_zfish.txt
+
+#file1: blast results from species 1
+#file2: blas results from species 2
+#file3: table of gene names, IDs, and protein IDs for species 1 
+#file3: table of gene names, IDs, and protein IDs for species 2 
+input arguments for the filepaths of file1, file2, file3, and file4 
+
+initialize dictionary called biomart_species1
+initialize dictionary called biomart_species2
+
+with opening file3 and file4 to read: 
+    for line in file3:
+        if the number of columns in the line is not 3:
+            continue
+        proteinID = column 2
+        geneID = column 1
+        genename = column 3
+        biomart_species1[proteinID] = [geneID,genename]
+
+    for line in file4:
+        if the number of columns in the line is not 3:
+            continue
+        proteinID = column 2
+        geneID = column 1
+        genename = column 3
+        biomart_species2[proteinID] = [geneID,genename]
+
+
+initialize dictionary called species1
+initialize dicionary called species2 
+
+with opening file1 and file2 to read: 
+    skipped_gene = ""
+    for line in file1:
+        gene1 = column1 
+        if (gene1 == skipped_gene)
+            continue
+        gene2 = column2
+        evalue = column11
+
+        if gene1 not in species1: #because the list is sorted, we can automatically assume this is the lowest e-value
+            species1[gene1] = [[gene1], [evalue]]
+        else:
+            if evalue = species1[gene1][1][0]:
+                append evalue to the end of species1[gene1][1]
+                append gene2 to the end of species1[gene1][0]
+            else: #because the list is sorted we can assume if its not equal, it is greater 
+                skipped_gene = gene1
+
+    skipped_gene = ""
+    for line in file2: 
+        gene1 = column1 
+        if (gene1 == skipped_gene)
+            continue
+        gene2 = column2
+        evalue = column11
+
+        if gene1 not in species2: #because the list is sorted, we can automatically assume this is the lowest e-value
+            species2[gene1] = [[gene1], [evalue]]
+        else:
+            if evalue = species1[gene1][1][0]:
+                append evalue to the end of species2[gene1][1]
+                append gene2 to the end of species2[gene1][0]
+            else: #because the list is sorted we can assume if its not equal, it is greater 
+                skipped_gene = gene1
+
+with opening new file to write, opening file3 and file4 to read:
+    for gene_species_1, value in species1:
+        if length of value[0] != 1: #check if there's only 1 lowest e-value for the gene of species1
+            continue
+        gene_species_2 = value[0][0]
+        if length of species2[gene_species_2][0] != 1 #check if there's only 1 lowest e-value for the gene of gene_species_2
+            continue
+        combination1 = [gene_species_1, gene_species_2]
+        combination2 = [gene_species_2, species2[gene_species_2][0]]
+        if (combination1 == reverse order of combination2)
+            Species1geneID = biomart_species1[gene_species_1][0]
+            Species1proteinID = gene_species_1
+            Species1genename = biomart_species1[gene_species_1][1]      
+            Species2geneID = biomart_species2[gene_species_2][0]
+            Species2proteinID = gene_species_2
+            Species2genename = biomart_species2[gene_species_2][1]
+            
+            #formatting: Species 1 Gene ID, Species 1 Protein ID, Species 1 Gene Name, Species 2 Gene ID, Species 1 Protein ID, Species 2 Gene Name
+            write to file("Species1geneID<tab>Species1proteinID<tab>Species1genename<tab>Species2geneID<tab>Species2proteinID<tab>Species2genename)
+
+            
+
+
