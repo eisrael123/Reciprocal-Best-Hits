@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 
 def get_args():
@@ -33,9 +35,9 @@ def get_args():
 args = get_args()
 
 
+# Initialize dictionary of protein IDs, gene names, and gene IDs from biomart files
 biomart_species1 = {}
 biomart_species2 = {}
-
 with open(args.biomart1, 'r') as f_in1, open(args.biomart2, 'r') as f_in2:
     for line in f_in1:
         columns = line.strip().split('\t')
@@ -50,6 +52,9 @@ with open(args.biomart1, 'r') as f_in1, open(args.biomart2, 'r') as f_in2:
             continue
         gene_id, protein_id, gene_name = columns
         biomart_species2[protein_id] = [gene_id, gene_name]
+
+#print(biomart_species1)
+#print(biomart_species2)
 
 species1_hits = {}
 species2_hits = {}
@@ -68,19 +73,15 @@ with open(args.blast1, 'r') as f_in1, open(args.blast2, 'r') as f_in2:
             continue
         
         gene2 = columns[1]
-        try:
-            evalue = float(columns[10])
-        except ValueError:
-            # Skip lines where e-value is not a valid float
-            continue
+        evalue = float(columns[10])
 
         if gene1 not in species1_hits:
             # First time seeing this gene, so this is its best hit
             species1_hits[gene1] = [[gene2], [evalue]]
         else:
             # This gene already has a recorded best hit
-            if evalue == species1_hits[gene1][1][0]:
-                # Tie for the best hit, add this hit as well
+            if evalue == species1_hits[gene1][1][0] and gene2 not in species1_hits[gene1][0]:
+                # Tie for the best hit (but not a duplicate), add this hit as well.
                 species1_hits[gene1][0].append(gene2)
                 species1_hits[gene1][1].append(evalue)
             else:
@@ -100,66 +101,79 @@ with open(args.blast1, 'r') as f_in1, open(args.blast2, 'r') as f_in2:
             continue
 
         gene2 = columns[1]
-        try:
-            evalue = float(columns[10])
-        except ValueError:
-            continue
+        evalue = float(columns[10])
 
         if gene1 not in species2_hits:
             species2_hits[gene1] = [[gene2], [evalue]]
         else:
-            if evalue == species2_hits[gene1][1][0]:
+            if evalue == species2_hits[gene1][1][0] and gene2 not in species2_hits[gene1][0]:
                 species2_hits[gene1][0].append(gene2)
                 species2_hits[gene1][1].append(evalue)
             else:
                 skipped_gene = gene1
-    
-    reciprocal_count = 0
-    with open(args.output, 'w') as f_out:
-        for gene_species_1, value in species1_hits.items():
-            # Condition 1: Check if there's only one unique best hit for the gene from species 1
-            if len(value[0]) != 1:
-                continue
+
+#print(species1_hits)
+#print(species2_hits)
+
+reciprocal_count = 0
+not_found_count = 0
+with open(args.output, 'w') as f_out:
+    # Write a header for the output file
+    header = (
+            "Species 1 Gene ID\tSpecies 1 Protein ID\tSpecies 1 Gene Name\t"
+            "Species 2 Gene ID\tSpecies2 Protein ID\tSpecies 2 Gene Name\n"
+        )
+    f_out.write(header)
+    for gene_species_1, value in species1_hits.items():
+        # Condition 1: Check if there's only one unique best hit for the gene from species 1
+        if len(value[0]) != 1:
+            continue
+        
+        gene_species_2 = value[0][0]
+
+        # Check if the best hit from species 1 even exists as a query in species 2's results
+        if gene_species_2 not in species2_hits:
+            continue
+
+        # Condition 2: Check if there's only one unique best hit for that corresponding gene in species 2
+        if len(species2_hits[gene_species_2][0]) != 1:
+            continue
+        
+        # Condition 3: Check for reciprocity --> is the best hit for gene_species_2 the original gene_species_1?
+        if species2_hits[gene_species_2][0][0] == gene_species_1:
+            # This is a reciprocal best hit pair.
             
-            gene_species_2 = value[0][0]
+            # Retrieve annotation info, with checks for missing keys
+            info1 = biomart_species1.get(gene_species_1)
+            info2 = biomart_species2.get(gene_species_2)
 
-            # Check if the best hit from species 1 even exists as a query in species 2's results
-            if gene_species_2 not in species2_hits:
+            # Skip if we can't find the annotation for either protein
+            if not info1:
+                print(f"info not found for {gene_species_1}, skipping...")
+                not_found_count += 1
+                continue
+            if not info2:
+                print(f"info not found for {gene_species_2}, skipping...")
+                not_found_count += 1
                 continue
 
-            # Condition 2: Check if there's only one unique best hit for that corresponding gene in species 2
-            if len(species2_hits[gene_species_2][0]) != 1:
-                continue
-            
-            # Condition 3: Check for reciprocity
-            # Is the best hit for gene_species_2 the original gene_species_1?
-            if species2_hits[gene_species_2][0][0] == gene_species_1:
-                # This is a reciprocal best hit pair.
-                
-                # Retrieve annotation info, with checks for missing keys
-                info1 = biomart_species1.get(gene_species_1)
-                info2 = biomart_species2.get(gene_species_2)
+            species1_gene_id = info1[0]
+            species1_protein_id = gene_species_1
+            species1_gene_name = info1[1]
 
-                if not info1 or not info2:
-                    # Skip if we can't find the annotation for either protein
-                    continue
+            species2_gene_id = info2[0]
+            species2_protein_id = gene_species_2
+            species2_gene_name = info2[1]
 
-                species1_gene_id = info1[0]
-                species1_protein_id = gene_species_1
-                species1_gene_name = info1[1]
-
-                species2_gene_id = info2[0]
-                species2_protein_id = gene_species_2
-                species2_gene_name = info2[1]
-
-                # Format and write the output line
-                output_line = (
-                    f"{species1_gene_id}\t{species1_protein_id}\t{species1_gene_name}\t"
-                    f"{species2_gene_id}\t{species2_protein_id}\t{species2_gene_name}\n"
-                )
-                f_out.write(output_line)
-                reciprocal_count += 1
-    
-    print(f"Found and wrote {reciprocal_count} reciprocal best hit pairs to {output_path}.")
-    print("\nDone.")
+            # Format and write the output line: 
+            # N Species 1 Gene ID, Species 1 Protein ID, Species 1 Gene Name, Species 2 Gene ID, Species 1 Protein ID, Species 2 Gene Name
+            output_line = (
+                f"{species1_gene_id}\t{species1_protein_id}\t{species1_gene_name}\t"
+                f"{species2_gene_id}\t{species2_protein_id}\t{species2_gene_name}\n"
+            )
+            f_out.write(output_line)
+            reciprocal_count += 1
+print(f"{not_found_count} hits not found in the biomart dicitonary")
+print(f"Found and wrote {reciprocal_count} reciprocal best hit pairs to {args.output}.")
+print("\nDone.")
 

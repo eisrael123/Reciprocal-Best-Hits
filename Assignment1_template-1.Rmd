@@ -69,6 +69,12 @@ For this assignment, you will not be given the expected number of reciprocal bes
 
 [IF using the template, you can write your test cases below. I recommend putting these test cases in files.]
 
+* Test case 1 --> Reciprocal Best Hit for (contains a duplicate that should be ignored)
+* Test case 2 --> Both species are not UNIQUE reciprocal best hits 
+* Test case 3 --> Species 2 does not have Species 1 as the best e-value 
+* Test case 4 --> Species 1 does not have Species 2 as the best e-value
+
+
 ## Part 2: Write your script
 
 You are expected to write your script in python. The script must be annotated so that another student could understand what you are doing. 

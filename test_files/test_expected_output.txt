@@ -1,0 +1,2 @@
+Species 1 Gene ID   Species 1 Protein ID    Species 1 Gene Name Species 2 Gene ID   Species2 Protein ID Species 2 Gene Name
+ENSG00000004059	ENSP00000000233	ARF5    ENSDARG00000113899	ENSDARP00000149649	ARF5
