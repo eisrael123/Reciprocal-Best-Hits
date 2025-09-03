@@ -1,0 +1,162 @@
+---
+title: "Assignment 1: Reciprocal best hits algorithm"
+output: html_document
+date: "2025-06-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overall assignment:
+
+In this assignment, you will identify orthologous genes across species by developing your own algorithms. You will build upon your python coding skills to create a script to identify 1:1 reciprocal blast hits across two species. In addition to honing your current skill set, you will also learn how to interpret the output of your script.
+
+This assignment is part 2 of PS7 from Bi621. In Bi621, you accomplished the first two steps of the pipeline, and in Bi623 you will complete the pipeline in assignment 1. Take notes of what you’ve done, both on and off the terminal, in your lab notebook. You will submit this assignment by uploading your files to your repository and turning in the name of your repository to Canvas.
+**This template is provided as reference for instructions. Files with specific naming conventions are requested to be turned in at the end of this problem set. You can use this template to gather notes while completing this assignment.**
+
+## Dataset:
+
+You will be identifying orthologs across humans, zebrafish, and two electric fish species. These datasets were gathered via Ensembl, through downloading the genomes, annotations, and biomart data. The ortholog calls that you identify in this assignment may be used for a gene ontology analysis in our differential gene expression assignment. Your software can be applied to other biological explorations in future contexts.
+
+## Reminder on PS7 from Bi621
+
+You already developed the first two steps of the pipeline to identify orthologs. In the first step of your pipeline, you downloaded protein fasta files from Ensembl and found the longest protein record using a custom script. In the second step of your pipeline, you gathered sequence matches in another species using blastp.
+
+## Part 0: Getting start on this assignment
+
+The final step of your reciprocal best hits pipeline to identify orthologs is developing a script to parse blastp results.
+
+Your script will take in blastp output files and output a tab separated table with the reciprocal best hits. There are three requirements for your script:
+
+1. First, it must filter blastp results and only retain the best hit(s) for each protein query based on e-value. 
+
+2. Second, it must take these best hits and retain only the protein pairs that share a 1:1 reciprocal best hit.
+
+3. Third, it must output a tab separated table of all proteins with reciprocal best hits.
+
+**Important notes:**
+
+1. Hits from blastp may not be ordered from best to worst! You will want to run `sort` on the output from part 2.6 BEFORE reading it into python. Sort by qseqid and then evalue but be sure that your sort has the “best” e-values for each query at the top.
+
+2. 1-to-1 means that that if proteinA in Species1 has two best hits with the same e-value to Species2 protein1 and protein2, these hits should be thrown out and no RBH called.
+
+3. If you do not have perfect output from part 2.6, Leslie and Hope provided their final blastp outputs on Talapas here (these are not sorted):
+ `/projects/bgmp/shared/Bi623/PS1/blasthits/Dre_query_Hsa_db.txt`, `/projects/bgmp/shared/Bi623/PS1/blasthits/Hsa_query_Dre_db.txt`
+ 
+4. You may want to use your Biomart output from part 1.2 to look up gene names and IDs. Leslie and Hope provided the Biomart outputs if you need them (`/projects/bgmp/shared/Bi623/PS1/biomart`).
+
+## Part 1: Brainstorm your approach
+
+The requirements for your reciprocal best hits script are listed below with key notes. 
+
+1.	First, the script should filter blastp results and only retain the best hit(s) for each protein query based on e-value.
+  **Note: you can write a bash command to sort the data**
+  
+2.	Next, the script should determine which best hits share a 1:1 (species1:species2) reciprocal best hit.
+  **Note: In your pseudocode, please note all cases where protein hits should be discarded.**
+  
+3.	Finally, the script should output a tab separated table of all proteins with reciprocal best hits.
+  **Formatting note: N Species 1 Gene ID, Species 1 Protein ID, Species 1 Gene Name, Species 2 Gene ID, Species 1 Protein ID, Species 2 Gene Name**
+
+First, think your blastp output. Write out all cases where we want to keep a blast hit. Then, write down all cases where we want to remove a blast hit. Finally, write or draw pseudo-code for how to approach the reciprocal best hit script. 
+
+[IF using this rmd template, insert your pseudo-code here: can be written or a picture. It must be interpretable.]
+
+{r} [Pseudocode] (./pseudocode.txt)
+
+## Part 1.5: Create a test file and expected results
+
+For this assignment, you will not be given the expected number of reciprocal best hits. To make sure your script is working correctly, you are required to create a test file and its respective output file. Use these test files as you are writing your script to debug problems.
+
+[IF using the template, you can write your test cases below. I recommend putting these test cases in files.]
+
+* Test case 1 --> Reciprocal Best Hit for (contains a duplicate that should be ignored)
+* Test case 2 --> Both species are not UNIQUE reciprocal best hits 
+* Test case 3 --> Species 2 does not have Species 1 as the best e-value 
+* Test case 4 --> Species 1 does not have Species 2 as the best e-value
+
+
+## Part 2: Write your script
+
+You are expected to write your script in python. The script must be annotated so that another student could understand what you are doing. 
+
+[IF using the template, you can write python in the template. I would not recommend writing your script in the Rmarkdown.]
+
+## Part 3: Run your script
+
+Run your script on the below species combinations’ blastp results.
+a.	Human [Hsa] and Zebrafish [Dre] (from PS7 from 621)
+
+b.	Human [Hsa] and Electric eel [Eel] (`/projects/bgmp/shared/Bi623/PS1/blasthits/Hsa_query_Eel_db.txt`, (`/projects/bgmp/shared/Bi623/PS1/blasthits/Eel_query_Hsa_db.txt`)
+
+c.	Human [Hsa] and Electric baby whale [Pka] (`/projects/bgmp/shared/Bi623/PS1/blasthits/Hsa_query_Pka_db.txt`, (`/projects/bgmp/shared/Bi623/PS1/blasthits/Pka_query_Hsa_db.txt`)
+
+d.	Zebrafish [Dre] and Electric eel [Eel] (`/projects/bgmp/shared/Bi623/PS1/blasthits/Dre_query_Eel_db.txt`, (`/projects/bgmp/shared/Bi623/PS1/blasthits/Eel_query_Dre_db.txt`)
+
+e.	Zebrafish [Dre] and Electric baby whale [Pka] (`/projects/bgmp/shared/Bi623/PS1/blasthits/Dre_query_Pka_db.txt`, (`/projects/bgmp/shared/Bi623/PS1/blasthits/Pka_query_Dre_db.txt `)
+
+f.	Electric eel [Eel] and Electric baby whale [Pka] (`/projects/bgmp/shared/Bi623/PS1/blasthits/Eel_query_Pka_db.txt`, (`/projects/bgmp/shared/Bi623/PS1/blasthits/Pka_query_Eel_db.txt`)
+
+## Part 4: Analyze your results
+
+Determine the number of reciprocal best hits per species combination in the python script or a bash script. 
+
+**Human and Zebrafish** 
+Number of Reciprocal Best Hits:7895
+
+**Human Electric Eel**
+Number of Reciprocal Best Hits:8949
+
+**Human and Electric Baby Whale**
+Number of Reciprocal Best Hits:8944
+
+**Zebrafish and Electric Eel**
+Number of Reciprocal Best Hits:10185
+
+**Zebrafish and Electric Baby Whale**
+Number of Reciprocal Best Hits:9341
+
+**Electric Eel and Electric Baby Whale**
+Number of Reciprocal Best Hits:10662
+
+## Part 5: Answer the below questions
+
+1. How does the number of RBH’s vary across combinations? Any ideas why there is variance (biological or technical)?
+
+Evolutionary divergence: the more closely related (closer common ancestor) two genomes are, the more RBH they will share.
+
+2. Describe 1 situation where that you could use 1 or more of your reciprocal best hits file(s) either in an analysis or a workflow.
+
+You can do further analysis by annotating which genes share the most orthologs. For example, the top 10 gene IDs that show up the most in the RBH file. Then, you can dive deeper into those gene IDs and research their function in the genome. 
+
+3. What are some limits to the RBH approach?  
+
+The amount of "best hits" you get only go as far as the amount of information in each blast file and biomart file. For example, gene 1 from species 2 may show up as a best hit in the first blast output, but may go completely unrecognized in the other. Or, the gene may not exist in the biomart file. In these cases, it would not get counted as a "best hit" due to insufficient information.
+
+4. Why did we use protein sequences instead of gene sequences in this analysis? 
+
+Because proteins are much more conserved over evolutionary time, making analysis easier.
+
+## Bonus:
+
+Compare RBH orthologs to the orthologs identified in ICA2 Genespace assignment (i.e. the pangenes files). Did they find similar numbers of 1:1 orthologs? Did they make the same ortholog assignments?
+
+[Can include code and a response here]
+
+## Turning in your assignment
+
+To let us know when you are done with the assignment, turn in the name of your github repo on canvas. To turn in your work for this assignment over github, submit the following:
+
+1. All code used in part 3: potential sort command, python script, etc. 
+
+2. Your RBH files: Human_Zebrafish_RBH.tsv,  Human_ElectricEel_RBH.tsv,  Human_ElectricBabyWhale_RBH.tsv,  Zebrafish_ElectricEel_RBH.tsv,  Zebrafish_ElectricBabyWhale_RBH.tsv,  ElectricEel _ElectricBabyWhale_RBH.tsv
+
+3. Answers to the questions in a text file: PS1_answers.txt
+
+4. Your psuedocode
+
+5. Your unit test files and the expected output
+
+Be sure to document what you’ve done in your lab notebook.
+
